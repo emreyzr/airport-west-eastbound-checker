@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>East/West Checker</title>
+  <meta name="description" content="Enter a 4-letter ICAO code to see whether a flight from Turkish (LTxx) airports is eastbound or westbound.">
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --text: #1c2430;
+      --muted: #5d6878;
+      --border: #dde2e9;
+      --accent: #c8102e;
+      --east: #0f7b4f;
+      --east-bg: #e3f4ec;
+      --west: #1d5fbf;
+      --west-bg: #e4edfb;
+      --warn: #8a5a00;
+      --warn-bg: #fff3d6;
+      --error: #b42318;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #12161c;
+        --surface: #1b2129;
+        --text: #e6eaf0;
+        --muted: #9aa5b4;
+        --border: #2d3540;
+        --accent: #ff5a6e;
+        --east: #4fd39a;
+        --east-bg: #15352a;
+        --west: #7fb0ff;
+        --west-bg: #172a47;
+        --warn: #f5c565;
+        --warn-bg: #3a2e12;
+        --error: #ff8a80;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #12161c;
+      --surface: #1b2129;
+      --text: #e6eaf0;
+      --muted: #9aa5b4;
+      --border: #2d3540;
+      --accent: #ff5a6e;
+      --east: #4fd39a;
+      --east-bg: #15352a;
+      --west: #7fb0ff;
+      --west-bg: #172a47;
+      --warn: #f5c565;
+      --warn-bg: #3a2e12;
+      --error: #ff8a80;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main { max-width: 760px; margin: 0 auto; padding: 32px 16px 48px; }
+    h1 { font-size: 1.6rem; margin: 0 0 4px; }
+    .lead { color: var(--muted); margin: 0 0 24px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
+    input, select, button {
+      font: inherit;
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+    }
+    #icao { text-transform: uppercase; letter-spacing: 0.15em; font-weight: 600; }
+    button {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      width: auto;
+      padding: 10px 20px;
+    }
+    @media (max-width: 560px) {
+      form { grid-template-columns: 1fr; }
+      button { width: 100%; }
+    }
+    .verdict {
+      display: inline-block;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      padding: 6px 16px;
+      border-radius: 10px;
+      margin: 4px 0 12px;
+    }
+    .EASTBOUND { color: var(--east); background: var(--east-bg); }
+    .WESTBOUND { color: var(--west); background: var(--west-bg); }
+    .dest-name { font-weight: 600; font-size: 1.1rem; }
+    .muted { color: var(--muted); }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 12px; }
+    .stat { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+    .stat b { display: block; font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+    .warn { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 10px 12px; margin-top: 12px; }
+    .error { color: var(--error); font-weight: 600; }
+    .row-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .row-head label { display: flex; align-items: center; gap: 6px; margin: 0; }
+    .row-head input { width: auto; }
+    .table-wrap { overflow-x: auto; margin-top: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    th { color: var(--muted); font-weight: 600; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .pill { font-weight: 700; font-size: 0.8rem; padding: 2px 8px; border-radius: 999px; }
+    .hidden { display: none; }
+    footer { color: var(--muted); font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>LTxx East/West Checker</h1>
+    <p class="lead">Enter a destination ICAO code to see whether the flight from Turkish airports is eastbound or westbound.</p>
+
+    <section class="card">
+      <form id="form" autocomplete="off">
+        <div>
+          <label for="icao">Destination ICAO</label>
+          <input id="icao" maxlength="4" placeholder="e.g. EGLL" required>
+        </div>
+        <div>
+          <label for="origin">From (LTxx)</label>
+          <select id="origin"></select>
+        </div>
+        <button type="submit">Check</button>
+      </form>
+    </section>
+
+    <section id="result" class="card hidden" aria-live="polite"></section>
+
+    <section id="all" class="card hidden">
+      <div class="row-head">
+        <strong id="summary"></strong>
+        <label><input type="checkbox" id="show-all"> Include all LT airfields</label>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>From</th><th>Airport</th><th>Direction</th><th class="num">Course</th><th class="num">Distance</th></tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      Direction follows the semicircular convention: initial great-circle true course
+      000°–179° is eastbound, 180°–359° is westbound. Airport data from OurAirports.
+    </footer>
+  </main>
+
+  <script src="data/airports.js"></script>
+  <script src="direction.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
