@@ -145,4 +145,9 @@
   window.addEventListener("hashchange", loadFromHash);
   loadFromHash();
   icaoInput.focus();
+
+  // Offline support / installability. Service workers need http(s), so skip on file://.
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
 })();

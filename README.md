@@ -30,6 +30,23 @@ npm start            # python3 -m http.server 8000 → http://localhost:8000
 
 It also works as-is on GitHub Pages.
 
+## Deploying to Vercel
+
+`vercel.json` sets everything up: there's no build step, and the repo root is served as-is.
+
+- **Dashboard:** at vercel.com, choose *Add New → Project*, import this repo and click *Deploy*. You don't need to change any settings. Every push to `main` redeploys.
+- **CLI:** run `npm i -g vercel`, then `vercel` for a preview or `vercel --prod` for production.
+
+## Install as an app (PWA)
+
+The site is a Progressive Web App, so you can install it once it's deployed:
+
+- **iPhone / iPad (Safari):** tap Share, then *Add to Home Screen*
+- **Android (Chrome):** open the menu and choose *Install app*
+- **Desktop Chrome / Edge:** click the install icon in the address bar
+
+It opens full-screen and works offline, since all the airport data is cached on the device. A new deploy is picked up on the next launch after the app has been opened online. If you change cached files in a way that needs a hard refresh, bump `CACHE` in `sw.js`.
+
 ## Tests
 
 ```sh
